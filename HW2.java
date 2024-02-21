@@ -1,13 +1,21 @@
 import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.BadPaddingException;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Scanner;
 
 // BEGIN SOLUTION
@@ -20,18 +28,25 @@ public class HW2 {
     byte[] cipherBMP = Files.readAllBytes(Paths.get("cipher1.bmp"));
     
     // BEGIN SOLUTION
-    byte[] key = new byte[] { 0, 0, 0, 0, 
-                              0, 0, 0, 0, 
-                              0, 0, 0, 0, 
-                              0, 0, 0, 0 };
-    byte[] plainBMP = cipherBMP;    
+    byte[] key = new byte[] { 1, 2, 3, 4, 
+                              5, 6, 7, 8, 
+                              9, 10, 11, 12, 
+                              13, 14, 15, 16 };
+
+    SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
+    IvParameterSpec iv = new IvParameterSpec(new byte[16]);
+
+    Cipher cipher = Cipher.getInstance("AES/CBC/ISO10126Padding");
+    cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
+
+    byte[] plainBMP = cipher.doFinal(cipherBMP);    
     // END SOLUTION
     
     Files.write(Paths.get("plain1.bmp"), plainBMP);
   }
 
   static void P2() throws Exception {
-    byte[] cipher = Files.readAllBytes(Paths.get("cipher2.txt"));
+    byte[] cipher = Files.readAllBytes(Paths.get("cipher2.bin"));
     // BEGIN SOLUTION
     byte[] modifiedCipher = cipher;
     modifiedCipher[0] = cipher[16];
@@ -92,7 +107,7 @@ public class HW2 {
   public static void main(String [] args) {
     try {  
       P1();
-      //P2();
+      P2();
       //P3();
       //P4();
       //P5();
