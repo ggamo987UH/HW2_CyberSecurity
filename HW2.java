@@ -11,12 +11,19 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.TreeMap;
 
 // BEGIN SOLUTION
 // Please import only standard libraries and make sure that your code compiles and runs without unhandled exceptions 
@@ -46,17 +53,67 @@ public class HW2 {
   }
 
   static void P2() throws Exception {
-    byte[] cipher = Files.readAllBytes(Paths.get("cipher2.bin"));
-    // BEGIN SOLUTION
-    byte[] modifiedCipher = cipher;
-    modifiedCipher[0] = cipher[16];
-    modifiedCipher[16] = cipher[0];
-    byte[] plain = modifiedCipher;
-
-    // END SOLUTION
+    byte[] cipherBin = Files.readAllBytes(Paths.get("cipher2.bin"));
     
+    Map<Integer, SimpleEntry<Integer, Integer>> blockOrder = new TreeMap<>();
+    Integer counter = 1;
+
+    for (int i = 0; i < cipherBin.length; i += 16) {
+        blockOrder.put(counter++, new SimpleEntry<>(i, i + 16));
+    }
+
+    List<List<Integer>> combinations = combinationsOrder(Arrays.asList(1, 2, 3));
+
+    Map<Integer, byte[]> orderedBlocks = new LinkedHashMap<>();
+
+    for (List<Integer> combination : combinations) {
+        for (int i = 0; i < combination.size(); i++) {
+            orderedBlocks.put(combination.get(i), Arrays.copyOfRange(cipherBin, blockOrder.get(combination.get(i)).getKey(), blockOrder.get(combination.get(i)).getValue()));
+            System.out.println("Block " + combination.get(i) + " " + Arrays.toString(orderedBlocks.get(combination.get(i))));
+            ///decrypt the block here
+            byte[] decryptedBlock = decryptBlock(orderedBlocks.get(combination.get(i)));
+            System.out.println("Decrypted Block " + combination.get(i) + " " + Arrays.toString(decryptedBlock));
+
+        }
+
+        System.out.println("--------------------------------------------------------");
+    }
+
+
+    byte[] plain = new byte[cipherBin.length];
+
+
     Files.write(Paths.get("plain2.txt"), plain);
   }
+
+  static List<List<Integer>> combinationsOrder(List<Integer> blockOrder) {
+    List<List<Integer>> result = new ArrayList<>();
+    for (int i = 0; i < blockOrder.size(); i++) {
+        for (int j = 0; j < blockOrder.size(); j++) {
+            for (int k = 0; k < blockOrder.size(); k++) {
+                if (i != j && j != k && i != k) {
+                    result.add(Arrays.asList(blockOrder.get(i), blockOrder.get(j), blockOrder.get(k)));
+                }
+            }
+        }
+    }
+    return result;
+  }
+
+  static byte[] decryptBlock(byte[] block) throws Exception {
+    byte[] key = new byte[] {
+      1, 2, 3, 4, 
+      5, 6, 7, 8, 
+      9, 10, 11, 12, 
+      13, 14, 15, 16
+    };
+    SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
+    IvParameterSpec iv = new IvParameterSpec(new byte[16]);
+    Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
+    cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
+    return cipher.doFinal(block);
+  }
+
 
   static void P3() throws Exception {
     byte[] cipherBMP = Files.readAllBytes(Paths.get("cipher3.bmp"));
