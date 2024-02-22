@@ -118,11 +118,24 @@ public class HW2 {
     byte[] otherBMP = Files.readAllBytes(Paths.get("plain1.bmp"));
     
     // BEGIN SOLUTION
+    Integer cipherBMPCounter = 0;
+    Integer otherBMPCounter = 0;
+    System.err.println(cipherBMP.length);
+    System.err.println(otherBMP.length);
+
+    while ( cipherBMPCounter < 2000 && otherBMPCounter < 2000) {
+      cipherBMP[cipherBMPCounter] = otherBMP[otherBMPCounter];
+      cipherBMPCounter++;
+      otherBMPCounter++;
+
+    }
+  
     byte[] modifiedBMP = cipherBMP;
 
     // END SOLUTION
     
     Files.write(Paths.get("cipher3_modified.bmp"), modifiedBMP);
+
   }
 
   static void P4() throws Exception {
@@ -163,7 +176,7 @@ public class HW2 {
     try {  
       P1();
       P2();
-      //P3();
+      P3();
       //P4();
       //P5();
     } catch (Exception e) {
