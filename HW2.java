@@ -66,24 +66,22 @@ public class HW2 {
 
     Map<Integer, byte[]> orderedBlocks = new LinkedHashMap<>();
 
+    List<byte[]> combined3blocks  = new ArrayList<>();
+
     for (List<Integer> combination : combinations) {
+        byte[] combined3block = new byte[48];
         for (int i = 0; i < combination.size(); i++) {
             orderedBlocks.put(combination.get(i), Arrays.copyOfRange(cipherBin, blockOrder.get(combination.get(i)).getKey(), blockOrder.get(combination.get(i)).getValue()));
-            System.out.println("Block " + combination.get(i) + " " + Arrays.toString(orderedBlocks.get(combination.get(i))));
-            ///decrypt the block here
-            byte[] decryptedBlock = decryptBlock(orderedBlocks.get(combination.get(i)));
-            System.out.println("Decrypted Block " + combination.get(i) + " " + Arrays.toString(decryptedBlock));
-
+            System.arraycopy(orderedBlocks.get(combination.get(i)), 0, combined3block, i * 16, 16);
         }
-
-        System.out.println("--------------------------------------------------------");
+        combined3blocks.add(combined3block);
     }
 
+    for (byte[] combined3block : combined3blocks) {
+      byte[] plain = decryptBlock(combined3block);
+      Files.write(Paths.get("plain2.txt"), plain);
+    }
 
-    byte[] plain = new byte[cipherBin.length];
-
-
-    Files.write(Paths.get("plain2.txt"), plain);
   }
 
   static List<List<Integer>> combinationsOrder(List<Integer> blockOrder) {
