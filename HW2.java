@@ -116,20 +116,33 @@ public class HW2 {
   static void P3() throws Exception {
     byte[] cipherBMP = Files.readAllBytes(Paths.get("cipher3.bmp"));
     byte[] otherBMP = Files.readAllBytes(Paths.get("plain1.bmp"));
-    
-    // BEGIN SOLUTION
-    Integer cipherBMPCounter = 0;
-    Integer otherBMPCounter = 0;
-    System.err.println(cipherBMP.length);
-    System.err.println(otherBMP.length);
-
-    while ( cipherBMPCounter < 2000 && otherBMPCounter < 2000) {
-      cipherBMP[cipherBMPCounter] = otherBMP[otherBMPCounter];
-      cipherBMPCounter++;
-      otherBMPCounter++;
-
-    }
   
+    // seperate this by 16 bytes into 4 blocks in for loop, then print out the blocks
+
+
+    int start = 0;
+    int blockSize = 16;
+
+
+    while (start < cipherBMP.length) {
+      // Calculate the end index. Ensure it does not exceed the array length
+      int end = Math.min(start + blockSize, cipherBMP.length);
+      
+      // Copy the range from start to end (exclusive) to create a block
+      byte[] block = Arrays.copyOfRange(cipherBMP, start, end);
+      
+      // Print the block
+      System.out.println("Block " + (start / blockSize + 1) + ": " + Arrays.toString(block));
+      
+      // Move to the next block
+      start += blockSize;
+  }
+
+
+    
+    // System.out.println("block1: " + Arrays.toString(block1));
+
+
     byte[] modifiedBMP = cipherBMP;
 
     // END SOLUTION
