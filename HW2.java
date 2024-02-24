@@ -1,28 +1,14 @@
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.BadPaddingException;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.TreeMap;
 
 // BEGIN SOLUTION
@@ -116,73 +102,91 @@ public class HW2 {
   static void P3() throws Exception {
     byte[] cipherBMP = Files.readAllBytes(Paths.get("cipher3.bmp"));
     byte[] otherBMP = Files.readAllBytes(Paths.get("plain1.bmp"));
-  
-    // seperate this by 16 bytes into 4 blocks in for loop, then print out the blocks
 
+    Integer counter = 0;
 
-    int start = 0;
-    int blockSize = 16;
-
-
-    while (start < cipherBMP.length) {
-      // Calculate the end index. Ensure it does not exceed the array length
-      int end = Math.min(start + blockSize, cipherBMP.length);
-      
-      // Copy the range from start to end (exclusive) to create a block
-      byte[] block = Arrays.copyOfRange(cipherBMP, start, end);
-      
-      // Print the block
-      System.out.println("Block " + (start / blockSize + 1) + ": " + Arrays.toString(block));
-      
-      // Move to the next block
-      start += blockSize;
-  }
-
-
-    
-    // System.out.println("block1: " + Arrays.toString(block1));
-
+    while (counter < 2000 ){
+      cipherBMP[counter] = otherBMP[counter];
+      counter++;
+    }
 
     byte[] modifiedBMP = cipherBMP;
 
-    // END SOLUTION
-    
     Files.write(Paths.get("cipher3_modified.bmp"), modifiedBMP);
 
   }
 
   static void P4() throws Exception {
-    byte[] plainA = Files.readAllBytes(Paths.get("plain4A.txt"));
-    byte[] cipherA = Files.readAllBytes(Paths.get("cipher4A.txt"));
-    byte[] cipherB = Files.readAllBytes(Paths.get("cipher4B.txt"));
-    
-    // BEGIN SOLUTION
-    byte[] plainB = cipherB;
+    byte[] plainTextA = Files.readAllBytes(Paths.get("plain4A.txt"));
+    byte[] cipherTextA = Files.readAllBytes(Paths.get("cipher4A.bin"));
+    byte[] cipherTextB = Files.readAllBytes(Paths.get("cipher4B.bin"));
 
-    // END SOLUTION
-    
+    byte[] keystream = new byte[cipherTextA.length];
+    for (int i = 0; i < cipherTextA.length; i++) {
+      keystream[i] = (byte) (plainTextA[i] ^ cipherTextA[i]);
+    }
+
+    byte[] plainB = new byte[cipherTextB.length];
+    for (int i = 0; i < cipherTextB.length; i++) {
+      plainB[i] = (byte) (keystream[i] ^ cipherTextB[i]);
+    }
+
     Files.write(Paths.get("plain4B.txt"), plainB);
   }
 
   static void P5() throws Exception {
     byte[] cipherBMP = Files.readAllBytes(Paths.get("cipher5.bmp"));
+    byte[] key = findKey(cipherBMP);
     
-    // BEGIN SOLUTION
-    byte[] plainBMP;
-    byte[] key = new byte[] {   0,   0,    0,   0, 
-                                0,   0,    0,   0,
-                                0,   0,    0,   0,
-                                0,   0,    0,   0 }; // byte array size
-    // try {
-      plainBMP = cipherBMP;
-      // decryption might throw a BadPaddingException!
-    // }
-    // catch (BadPaddingException e) {
-    // }
+    SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
+    IvParameterSpec iv = new IvParameterSpec(new byte[16]);
+    Cipher cipher = Cipher.getInstance("AES/CBC/ISO10126Padding");
+    cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
 
-    // END SOLUTION
+    byte[] plainBMP = cipher.doFinal(cipherBMP);
+
     
     Files.write(Paths.get("plain5.bmp"), plainBMP);
+  }
+
+static byte [] findKey(byte[] cipherBMP) throws Exception {
+  byte [] iv = new byte[16];
+  byte[] key = new byte[] {
+    0,0,0,0,
+    0,0,0,0,
+    0,0,0,0,
+    0,0,0,0
+  };
+  for (int i = 0; i < 100; i++) {
+    for (int j = 1; j < 13; j++) {
+      for (int k = 1; k < 32; k++) {
+        key[0] = (byte) i;
+        key[1] = (byte) j;
+        key[2] = (byte) k;
+        try {
+          if (checkKey(cipherBMP, key, iv)){
+            key[0] = (byte) i;
+            key[1] = (byte) j;
+            key[2] = (byte) k;
+            return key;
+          }
+        } catch (Exception e) {
+          continue;
+        }
+      }
+    }
+  }
+  return key;
+}
+
+
+  static boolean checkKey(byte[] block, byte[] key, byte[] iv) throws Exception {
+    SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
+    IvParameterSpec ivSpec = new IvParameterSpec(iv);
+    Cipher cipher = Cipher.getInstance("AES/CBC/ISO10126Padding");
+    cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
+    byte[] decryptedData = cipher.doFinal(block);
+    return (decryptedData[0] == 66 && decryptedData[1] == 77);
   }
 
   public static void main(String [] args) {
@@ -190,8 +194,8 @@ public class HW2 {
       P1();
       P2();
       P3();
-      //P4();
-      //P5();
+      P4();
+      P5();
     } catch (Exception e) {
       e.printStackTrace();
     } 
